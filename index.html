@@ -1,0 +1,12 @@
+<!doctype html>
+
+<html lang="ru"><head><link rel="icon" type="image/svg+xml" href="/favicon.svg"/><meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"/><meta name="theme-color" content="#171828"/><title>Monster Pet — Буба</title></head><body><main class="shell"><header><span class="brand">MONSTER PET <small>ПЕРВЫЙ ПРОТОТИП</small></span><span class="badge">01 / БУБА</span></header><section class="intro"><p class="eyebrow">МАЛЕНЬКИЙ МОНСТР. БОЛЬШОЙ ХАРАКТЕР.</p><h1>Ну что, <span>подружимся?</span></h1><p>Он ворчит. Ты заботишься. Кажется, это любовь.</p></section><section class="pet-card"><div class="room-top"><div><span class="live-dot"></span> КОМНАТА БУБЫ</div><span>ДОМА</span></div><div id="game" role="img" aria-label="Комната с фиолетовым пиксельным монстриком Бубой"></div><p id="speech" aria-live="polite">Я сам решу, когда мы подружимся.</p><div id="stats" class="stats"></div><div class="actions"><button data-action="feed"><span>✦</span>Покормить<small>+20 сытости</small></button><button data-action="play"><span>↗</span>Поиграть<small>+15 настроения</small></button><button data-action="rest"><span>☾</span>Отдохнуть<small>+20 энергии</small></button></div></section><footer><span>БУБА · УПРЯМЫЙ ВОРЧУН</span><span id="save-status">Прогресс хранится в этом браузере</span></footer></main><script type="module" src="/src/main.ts"></script><script>
+if (location.protocol === 'file:') {
+  addEventListener('DOMContentLoaded', () => {
+    const help = document.createElement('div');
+    help.style.cssText = 'padding:24px;background:#252334;color:#eee9e4;font:18px/1.6 system-ui';
+    help.textContent = 'Для запуска игры открой START.cmd в папке monster-pet. Затем перейди в браузере на http://127.0.0.1:5173. Первый запуск требует интернета. Оставь окно запуска открытым.';
+    document.body.replaceChildren(help);
+  });
+}
+</script></body></html>

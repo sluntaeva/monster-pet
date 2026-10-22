@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.local
+data/
+work/
+obsidian-update/
+obsidian-latest/
+docs/Отчёт*
+docs/backend-preview.png
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.log

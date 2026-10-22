@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Tiny5&display=swap');
+:root{font-family:'Tiny5','Courier New',monospace;color:#f6e6ba;background:#161b29;--ink:#101421;--panel:#262c44;--muted:#bfc3d3;--mint:#a6e3a1;--gold:#f6cf79;--purple:#b7a1ed}
+body{background-color:#161b29;background-image:linear-gradient(#242b3a88 1px,transparent 1px),linear-gradient(90deg,#242b3a88 1px,transparent 1px);background-size:24px 24px}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;background:repeating-linear-gradient(transparent 0 3px,#00000010 3px 4px);z-index:5}
+.shell{max-width:800px;padding-top:30px}
+header{border-bottom:3px solid #444c65;padding-bottom:20px}
+.brand{font-family:'Press Start 2P',monospace;font-size:14px;color:var(--gold);text-shadow:3px 3px #080c17;line-height:1.8;letter-spacing:0}
+.brand::before{content:'◆ ';color:var(--mint)}
+.brand small{font-family:'Tiny5',monospace;font-size:13px;color:var(--muted);letter-spacing:2px;margin-top:6px}
+.badge{font-size:15px;padding:8px 12px;background:var(--ink);border:2px solid #59617a;border-radius:0;box-shadow:3px 3px #080c17;color:var(--mint)}
+.intro{margin:30px 0 26px}
+.eyebrow{font-size:14px;letter-spacing:1px;color:var(--mint);line-height:1.7}
+h1{font-size:44px;line-height:1.1;margin:16px 0;text-shadow:3px 3px #080c17;font-weight:400;letter-spacing:0}
+h1 span{color:var(--purple)}
+.intro>p:last-child{font-size:18px;color:var(--muted);line-height:1.4}
+.pet-card,.quiz{max-width:480px;background:var(--panel);border:4px solid var(--ink);outline:3px solid #72798c;box-shadow:8px 8px 0 #080c17;border-radius:0}
+.room-top{padding:14px 16px;font-size:15px;letter-spacing:0;color:var(--gold);border-bottom:4px solid var(--ink);background:#30364e}
+.room-top>span{color:var(--mint)}
+.live-dot{background:var(--mint);width:8px;height:8px;margin-right:8px;border-radius:0;box-shadow:2px 2px var(--ink)}
+#game{border-bottom:4px solid var(--ink)}
+#speech{min-height:64px;margin:18px 16px;padding:13px 14px;background:var(--ink);border:2px solid #66708b;color:#fff0cb;font-size:18px;line-height:1.4;text-align:left}
+#speech::before{content:'▼';color:var(--gold);margin-right:8px}
+.stats{grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;padding:0 18px 22px}
+.stat>div{font-size:15px;color:var(--muted)}
+.stat b{font-size:25px;color:#fff1cd;font-weight:400}
+.stat small{font-size:15px;color:#a1a8bb}
+progress{height:12px;border:2px solid var(--ink);margin-top:6px;border-radius:0;background:var(--ink)}
+progress::-webkit-progress-bar{background:var(--ink)}
+progress::-webkit-progress-value{background:repeating-linear-gradient(90deg,var(--mint) 0 9px,#6fa87b 9px 11px)}
+progress::-moz-progress-bar{background:var(--mint)}
+.stat-mood progress::-webkit-progress-value{background:repeating-linear-gradient(90deg,var(--purple) 0 9px,#8172b5 9px 11px)}
+.stat-energy progress::-webkit-progress-value{background:repeating-linear-gradient(90deg,var(--gold) 0 9px,#b6904e 9px 11px)}
+.stat-mood progress::-moz-progress-bar{background:var(--purple)}
+.stat-energy progress::-moz-progress-bar{background:var(--gold)}
+.actions{grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;padding:0 16px 22px}
+button{font:18px/1.3 'Tiny5','Courier New',monospace;border:3px solid var(--ink);border-radius:0;color:#f6e6ba;background:#444763;padding:12px 5px;box-shadow:inset 3px 3px #70738e,inset -3px -3px #30334e,0 5px 0 var(--ink);transition:background .1s}
+button span{font-size:26px;line-height:30px;color:var(--gold)}
+button small{font-size:13px;color:#c4c3d4}
+button:hover{background:#575578;color:#fff4d6;transform:none}
+button:active{transform:translateY(3px);box-shadow:inset 3px 3px #30334e,inset -3px -3px #70738e,0 2px 0 var(--ink)}
+button:focus-visible{outline:3px dashed var(--gold);outline-offset:4px}
+footer{max-width:480px;margin-top:22px;color:#a1a8bb;font-size:13px;line-height:1.5}
+footer>span:first-child{color:var(--mint);letter-spacing:0}
+.quiz{padding:24px}
+.quiz>.eyebrow{margin:0 0 16px;border-bottom:2px dashed #59617a;padding-bottom:12px}
+.quiz h2{font-size:32px;font-weight:400;line-height:1.25;color:var(--gold);margin:18px 0;text-shadow:2px 2px var(--ink)}
+.quiz-hint{font-size:17px;line-height:1.5;color:var(--muted)}
+.quiz-answers{gap:14px;margin:24px 0 8px;counter-reset:answer}
+.quiz button{padding:14px 12px;font-size:20px;line-height:1.4;min-height:54px}
+.quiz-answers button{counter-increment:answer;display:flex;gap:12px;align-items:center}
+.quiz-answers button::before{content:counter(answer,decimal-leading-zero);color:var(--mint);font-size:17px}
+.quiz-answers button:hover::before{content:'►';color:var(--gold)}
+.quiz-back{margin-top:18px;background:#30364e;color:var(--muted)}
+.quiz blockquote{margin:24px 0;padding:16px;background:var(--ink);border-left:4px solid var(--purple);color:var(--purple);font-size:23px;line-height:1.5}
+.quiz>p:not([class]){font-size:21px;color:var(--mint)}
+@media(max-width:480px){.shell{padding:20px 14px max(24px,env(safe-area-inset-bottom))}.brand{font-size:11px}.brand small{font-size:11px;letter-spacing:1px}.badge{font-size:12px;padding:7px}.intro{margin:24px 0}.eyebrow{font-size:12px}h1{font-size:35px}.intro>p:last-child{font-size:16px}.quiz{padding:20px 16px}.quiz h2{font-size:28px}.quiz button{font-size:19px}.stats{gap:9px;padding:0 12px 20px}.stat>div{font-size:13px}.actions{gap:6px;padding:0 10px 18px}.actions button{font-size:16px}.actions small{font-size:11px}footer{font-size:11px}.room-top{font-size:13px}}
+@media(prefers-reduced-motion:reduce){button{transition:none}body::before{display:none}}
+.arcade{border-top:3px solid var(--ink);padding:18px 16px 22px;background:#20283b}
+.arcade h2{font-size:23px;color:var(--gold);margin:0 0 12px;font-weight:400}
+.arcade p{font-size:16px;line-height:1.5;color:var(--muted);margin:10px 0}
+.arcade .arcade-result{color:var(--mint);min-height:24px}
+.arcade button{width:100%;margin-top:8px;padding:14px}
+#game canvas{touch-action:none}
+.wallet-bar{padding:12px 16px;background:#101421;color:var(--gold);font-size:22px;border-bottom:3px solid #59617a;letter-spacing:1px}
+.shop button{display:block;width:100%;margin:12px 0;text-align:left;font-size:18px;padding:14px}
+.shop button:disabled{cursor:default;opacity:.5}
+.shop .shop-message{color:var(--mint)}

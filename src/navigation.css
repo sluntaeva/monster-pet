@@ -1,0 +1,31 @@
+.has-navigation .shell{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+.app-navigation{position:fixed;z-index:20;bottom:0;left:50%;transform:translateX(-50%);width:min(100%,520px);display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));background:#202538f2;border:1px solid #65708a;border-bottom:0;border-radius:24px 24px 0 0;box-shadow:0 -8px 32px #080c1740;backdrop-filter:blur(16px)}
+.app-navigation button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:58px;padding:6px;border:0;border-radius:14px;box-shadow:none;background:transparent;color:#b0b7cd;transition:background .15s}
+.app-navigation button svg{width:25px;height:25px;display:block}
+.app-navigation button span{display:block;font:16px/1.2 'Tiny5',monospace;color:inherit}
+.app-navigation button[aria-pressed=true]{background:#b7a1ed20;color:#d2beff}
+.app-navigation button:hover{background:#ffffff0b;transform:none}
+.app-navigation button:active{transform:scale(.97);box-shadow:none}
+.app-navigation button:focus-visible{outline:2px solid var(--gold);outline-offset:0}
+.app-navigation button:disabled{opacity:.4;cursor:wait}
+.actions{padding:4px 12px 22px;gap:10px}
+.actions button{min-height:88px}
+.touch-controls{display:flex;gap:10px;padding:0 16px 8px}
+.touch-controls button{flex:1;min-height:44px;font-size:16px;padding:10px}
+.touch-hint{padding:0 16px;color:var(--muted);font-size:14px;line-height:1.4}
+.sound-test{display:block;margin:6px 16px 16px;padding:8px 14px;min-height:44px;font-size:16px}
+.friendship-panel{padding:14px 16px;background:#25283e;border-bottom:2px solid #59617a}
+.friendship-heading{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;font-size:17px;color:#d2beff}
+.friendship-heading strong{font-weight:400;color:var(--gold)}
+.friendship-panel progress{height:12px;margin-top:12px}
+.friendship-panel progress::-webkit-progress-value{background:#c9a0e8}
+.friendship-panel progress::-moz-progress-bar{background:#c9a0e8}
+.friendship-panel p{font-size:14px;line-height:1.4;color:var(--muted);margin:8px 0}
+.friendship-panel small{font-size:12px;line-height:1.4;color:#a9b2c9;display:block}
+.friendship-notice{margin:0;padding:0 16px;color:var(--mint);font-size:16px;line-height:1.5}
+.friendship-notice:not(:empty){padding-top:10px;padding-bottom:10px}
+.app-navigation{padding-bottom:calc(10px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))}
+.has-navigation .shell{padding-bottom:calc(112px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))}
+.shell{padding-top:calc(30px + var(--tg-safe-top,0px))}
+.shop,.arcade{border-top:0}
+@media(max-width:480px){.has-navigation .intro{margin:18px 0}.has-navigation .intro h1{font-size:30px;margin:10px 0}.has-navigation .intro .eyebrow{font-size:10px}.has-navigation .intro>p:last-child{margin:8px 0;font-size:15px}.has-navigation header{padding-bottom:12px}.has-navigation footer{margin-top:16px}.app-navigation{border-left:0;border-right:0}}
