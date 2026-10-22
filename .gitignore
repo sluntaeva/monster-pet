@@ -14,3 +14,4 @@ docs/backend-preview.png
 *.sqlite-wal
 *.sqlite-shm
 *.log
+/PUSH-GITHUB.cmd
