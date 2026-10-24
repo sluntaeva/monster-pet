@@ -5,15 +5,17 @@ import { createHash, randomBytes, randomInt, randomUUID } from 'node:crypto';
 import { applyAction, initialPet, isPetState, type PetState } from '../src/domain/pet';
 import { emptyWallet, awardRun, readWallet, type Wallet } from '../src/domain/catchGame';
 import { drawPet, probabilities } from '../src/domain/onboarding';
-import { buyDecoration, decorations } from '../src/domain/shop';
+import { buyDecoration, decorations, equipDecoration } from '../src/domain/shop';
+import type { DecorationSlot } from '../src/domain/catalog';
 import { initialFriendship, gainFriendship, type Friendship } from '../src/domain/friendship';
 import { applyAbsence } from '../src/domain/absence';
+import { initialDailyQuest, dailyQuestForDay, advanceDailyQuest, type DailyQuest } from '../src/domain/dailyQuest';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
-export interface Snapshot { pet: PetState | null; wallet: Wallet; friendship: Friendship; version: number; serverTime: string }
-type Account = { id: string; pet: string | null; wallet: string; friendship: string; version: number; pet_updated_at: number };
+export interface Snapshot { pet: PetState | null; wallet: Wallet; friendship: Friendship; dailyQuest: DailyQuest; version: number; serverTime: string }
+type Account = { id: string; pet: string | null; wallet: string; friendship: string; daily_quest: string; version: number; pet_updated_at: number };
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 export class GameDatabase {
   db: DatabaseSync;
@@ -37,7 +39,10 @@ export class GameDatabase {
         this.db.exec('ALTER TABLE accounts ADD COLUMN pet_updated_at INTEGER NOT NULL DEFAULT 0');
         this.db.prepare('UPDATE accounts SET pet_updated_at=?').run(this.now());
       }
-      this.db.exec('PRAGMA user_version=3; COMMIT');
+      if (!columns.some(column => column.name === 'daily_quest')) {
+        this.db.exec(`ALTER TABLE accounts ADD COLUMN daily_quest TEXT NOT NULL DEFAULT '${JSON.stringify(initialDailyQuest())}'`);
+      }
+      this.db.exec('PRAGMA user_version=4; COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
   close(): void { this.db.close(); }
@@ -56,7 +61,8 @@ export class GameDatabase {
         row.version++;
       }
     }
-    return { pet: row.pet ? JSON.parse(row.pet) : null, wallet: readWallet(JSON.parse(row.wallet)), friendship: JSON.parse(row.friendship), version: row.version, serverTime: new Date(this.now()).toISOString() };
+    const serverTime = new Date(this.now()).toISOString();
+    return { pet: row.pet ? JSON.parse(row.pet) : null, wallet: readWallet(JSON.parse(row.wallet)), friendship: JSON.parse(row.friendship), dailyQuest: dailyQuestForDay(JSON.parse(row.daily_quest), serverTime.slice(0, 10)), version: row.version, serverTime };
   }
   login(id: string, legacy?: { pet?: unknown; wallet?: unknown }): string {
     this.db.exec('BEGIN IMMEDIATE');
@@ -92,6 +98,7 @@ export class GameDatabase {
       if (absence) pet = absence.pet;
       let wallet = readWallet(JSON.parse(row.wallet));
       let friendship: Friendship = JSON.parse(row.friendship);
+      let dailyQuest: DailyQuest = JSON.parse(row.daily_quest);
       const extra: Record<string, unknown> = {};
       const awardXp = (event: 'feed' | 'play' | 'rest' | 'game') => {
         const gained = gainFriendship(friendship, event, new Date(this.now()).toISOString().slice(0, 10));
@@ -111,6 +118,10 @@ export class GameDatabase {
             const next = applyAction(pet, action);
             const useful = action === 'feed' ? next.satiety > pet.satiety : action === 'rest' ? next.energy > pet.energy : next.mood > pet.mood;
             if (useful) awardXp(action); else extra.xpGain = 0;
+            const daily = advanceDailyQuest(dailyQuest, action, new Date(this.now()).toISOString().slice(0, 10));
+            dailyQuest = daily.quest;
+            wallet = { ...wallet, coins: wallet.coins + daily.reward };
+            extra.dailyReward = daily.reward;
             pet = next; break;
           }
           case '/api/shop/buy': {
@@ -121,7 +132,8 @@ export class GameDatabase {
           }
           case '/api/shop/equip': {
             if (body.item !== null && (typeof body.item !== 'string' || !wallet.owned?.includes(body.item))) throw new ApiError(400, 'Предмет ещё не куплен');
-            wallet = { ...wallet, equipped: body.item === null ? undefined : body.item as string }; break;
+            if (body.slot !== undefined && !['rug', 'plant', 'wall', 'toy'].includes(String(body.slot))) throw new ApiError(400, 'Неизвестное место украшения');
+            wallet = equipDecoration(wallet, body.item as string | null, body.slot as DecorationSlot | undefined); break;
           }
           case '/api/minigames/start': {
             const last = this.db.prepare('SELECT started FROM runs WHERE user_id=? ORDER BY started DESC LIMIT 1').get(id) as {started: number} | undefined;
@@ -145,6 +157,7 @@ export class GameDatabase {
         }
       }
       this.db.prepare('UPDATE accounts SET pet=?,wallet=?,friendship=?,pet_updated_at=?,version=version+1 WHERE id=?').run(JSON.stringify(pet), JSON.stringify(wallet), JSON.stringify(friendship), absence?.updatedAt ?? this.now(), id);
+      this.db.prepare('UPDATE accounts SET daily_quest=? WHERE id=?').run(JSON.stringify(dailyQuest), id);
       const response = { ...extra, state: this.state(id) };
       this.db.prepare('INSERT INTO receipts VALUES(?,?,?,?)').run(id, requestId, fingerprint, JSON.stringify(response));
       this.db.exec('COMMIT'); return response;

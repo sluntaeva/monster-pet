@@ -29,3 +29,73 @@
 .shell{padding-top:calc(30px + var(--tg-safe-top,0px))}
 .shop,.arcade{border-top:0}
 @media(max-width:480px){.has-navigation .intro{margin:18px 0}.has-navigation .intro h1{font-size:30px;margin:10px 0}.has-navigation .intro .eyebrow{font-size:10px}.has-navigation .intro>p:last-child{margin:8px 0;font-size:15px}.has-navigation header{padding-bottom:12px}.has-navigation footer{margin-top:16px}.app-navigation{border-left:0;border-right:0}}
+
+.daily-quest{padding:16px;border-top:2px solid var(--ink);background:#20283b}.daily-quest h2{margin:0 0 10px;font-size:19px;color:var(--gold);font-weight:400}.daily-quest p,.daily-quest li{font-size:16px;line-height:1.5}.daily-quest ul{list-style:none;padding:0;display:flex;flex-wrap:wrap;gap:8px 16px}.daily-quest small{display:block;font-size:12px;line-height:1.5;color:var(--muted)}.daily-quest .daily-reward{color:var(--mint)}
+
+/* Compact phone room; allow natural scrolling on short screens and text zoom. */
+@media(max-width:600px){
+  .is-playing .intro,.is-playing .brand small{display:none}
+  .is-playing .shell{padding:calc(8px + var(--tg-safe-top,0px)) 8px calc(78px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))}
+  .is-playing header{padding-bottom:6px;margin-bottom:8px;border-bottom:0}
+  .is-playing .brand{font-size:10px}.is-playing .badge{padding:4px 8px}
+  .is-playing .pet-card{border-width:2px;outline-width:1px;box-shadow:none}
+  .is-playing .room-top{display:none}
+  .is-playing .wallet-bar{padding:5px 10px;font-size:18px;border-bottom-width:1px}
+  .is-playing .friendship-panel{padding:6px 10px;border-bottom-width:1px}
+  .is-playing .friendship-heading{font-size:14px;gap:4px}
+  .is-playing .friendship-panel progress{height:7px;margin-top:4px}
+  .is-playing .friendship-panel p{font-size:12px;margin:4px 0 0}
+  .is-playing .friendship-panel small{display:none}
+  .is-playing #game{height:clamp(130px,25dvh,240px);aspect-ratio:auto}
+  .is-playing #speech{min-height:0;margin:6px 8px;padding:7px 8px;font-size:15px;line-height:1.25}
+  .is-playing .touch-hint{display:none}
+  .is-playing .touch-hint[role=status]:not(:empty){display:block;margin:4px 8px;padding:0;font-size:12px}
+  .is-playing .stats{padding:3px 10px 8px;gap:10px}
+  .is-playing .stat>div{font-size:12px}.is-playing .stat b{display:inline;font-size:18px;margin-left:4px}.is-playing .stat small{font-size:11px}
+  .is-playing .stat progress{height:8px;margin-top:4px}
+  .is-playing .actions{padding:2px 8px 10px;gap:7px}
+  .is-playing .actions button{min-height:54px;padding:5px 2px;font-size:15px}
+  .is-playing .actions button span{display:none}.is-playing .actions button small{font-size:10px;margin-top:3px}
+  .is-playing .daily-quest{padding:8px 10px}
+  .is-playing .daily-quest h2{font-size:15px;margin:0 0 4px}
+  .is-playing .daily-quest ul{gap:4px 10px;margin:4px 0}
+  .is-playing .daily-quest li,.is-playing .daily-quest p{font-size:13px;line-height:1.25;margin:4px 0}
+  .daily-quest summary{font-size:12px;color:var(--muted);cursor:pointer;min-height:24px;line-height:24px}
+  .is-playing .friendship-notice:not(:empty){font-size:13px;padding:5px 10px}
+  .is-playing footer{margin:6px auto 0;font-size:10px}.is-playing footer>span:first-child{display:none}
+  .app-navigation{padding:5px 12px calc(5px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)));border-radius:16px 16px 0 0}
+  .app-navigation button{min-height:48px;gap:2px}.app-navigation button svg{width:21px;height:21px}.app-navigation button span{font-size:14px}
+}
+.friendship-panel summary{font-size:12px;color:var(--muted);cursor:pointer;line-height:24px}
+@media(max-width:600px){.is-playing .friendship-panel details[open] small{display:block}.is-playing .friendship-panel summary{line-height:20px}}
+@media(max-width:600px) and (max-height:700px){.is-playing #game{height:clamp(110px,20dvh,140px)}.is-playing .shell{padding-bottom:calc(64px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))}.is-playing .daily-quest{padding-top:5px;padding-bottom:5px}.is-playing .friendship-panel{padding-top:4px;padding-bottom:4px}}
+.hero-card-open{cursor:pointer;min-height:44px;box-shadow:none}
+.hero-card-dialog{width:min(420px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:12px;border:2px solid var(--purple);background:var(--ink);color:var(--muted);overflow:auto}
+.hero-card-dialog::backdrop{background:#080c17d9}
+.hero-card-dialog img{display:block;max-width:100%;max-height:60dvh;width:auto;margin:10px auto;image-rendering:pixelated}
+.hero-card-close{display:block;margin-left:auto;min-height:44px;padding:8px 14px}
+.hero-card-actions{display:flex;flex-wrap:wrap;gap:10px}.hero-card-actions button{flex:1;min-height:44px;padding:8px}
+.hero-card-dialog p{font:14px/1.5 system-ui,sans-serif;margin:12px 0 0}
+.sound-toggle{min-height:44px;padding:6px 9px;font-size:14px;box-shadow:none;white-space:nowrap}
+@media(max-width:600px){.is-playing header{gap:5px}.is-playing .sound-toggle{font-size:12px;padding:5px}.is-playing .brand{font-size:9px}}
+.shop-category h3{font-size:20px;font-weight:400;color:var(--purple);margin:22px 0 10px}
+.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.shop .shop-item{margin:0;padding:12px 8px;min-height:126px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px}
+.shop-item .shop-icon{font-size:34px;line-height:38px}.shop-item strong{font-size:17px;font-weight:400}.shop-item small{font-size:13px;line-height:1.3;margin:0}
+.shop .shop-reset{font-size:14px;padding:10px;min-height:44px;background:#30364e}
+/* Pet-first room: compact supporting information, larger scene. */
+.is-playing .intro,.is-playing .touch-hint:not([role=status]),.is-playing footer{display:none}
+.friendship-panel summary,.daily-quest summary{cursor:pointer;font-size:14px;line-height:24px;color:var(--muted)}
+.friendship-panel summary span,.daily-quest summary span{float:right;color:var(--mint)}
+.friendship-panel{padding:6px 12px}.friendship-panel progress{height:6px;margin-top:4px}
+.daily-quest{padding:6px 12px}.friendship-panel details[open] small{display:block}
+@media(max-width:600px){
+  .is-playing #game{height:clamp(220px,calc(100dvh - 310px - var(--tg-safe-top,0px) - max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))),520px)}
+  .is-playing .friendship-panel{padding:4px 10px}
+  .is-playing .friendship-panel summary,.is-playing .daily-quest summary{font-size:13px;line-height:24px}
+  .is-playing .daily-quest{padding:4px 10px}
+  .is-playing .actions button small{display:none}
+  .is-playing .actions button{min-height:46px}
+  .is-playing #speech{font-size:14px;padding:6px 8px}
+}
+@media(max-width:600px){.is-playing #game{height:clamp(180px,calc(100dvh - 430px - var(--tg-safe-top,0px) - max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px))),400px)}.is-playing .shell{padding-bottom:calc(64px + max(env(safe-area-inset-bottom,0px),var(--tg-safe-bottom,0px)))}}

@@ -6,6 +6,7 @@ import { BootScene } from './game/scenes/BootScene';
 import { RoomScene } from './game/scenes/RoomScene';
 import { CatchScene } from './game/scenes/CatchScene';
 import { decorations } from './domain/shop';
+import type { DecorationSlot } from './domain/catalog';
 import { api } from './services/api';
 import type { PetAction, PetState } from './domain/pet';
 import { characters, questions } from './domain/onboarding';
@@ -13,6 +14,7 @@ import { touchReaction } from './domain/reaction';
 import { PetSound } from './services/petSound';
 import { petLine, touchLine } from './domain/dialogue';
 import { friendshipLevel, friendshipLevels, friendshipLine } from './domain/friendship';
+import { showHeroCard } from './services/heroCard';
 
 let gameInstance: Phaser.Game | undefined;
 const petSound = new PetSound();
@@ -21,6 +23,19 @@ const card = document.querySelector<HTMLElement>('.pet-card')!;
 const footer = document.querySelector<HTMLElement>('footer')!;
 function startRoom(): void {
 card.hidden = false; footer.hidden = false;
+document.body.classList.add('is-playing');
+const soundButton = document.createElement('button'); soundButton.className = 'sound-toggle';
+function renderSoundButton(): void {
+  soundButton.textContent = petSound.muted ? 'Звук: выкл.' : 'Звук: вкл.';
+  soundButton.setAttribute('aria-label', 'Звук игры'); soundButton.setAttribute('aria-pressed', String(!petSound.muted));
+}
+renderSoundButton();
+soundButton.onclick = () => {
+  petSound.muted = !petSound.muted;
+  try { localStorage.setItem('monster-pet:muted', String(petSound.muted)); } catch { /* Session preference. */ }
+  renderSoundButton(); if (!petSound.muted) void petSound.effect('catch');
+};
+document.querySelector('header')!.append(soundButton);
 const store = api;
 const character = characters[store.snapshot.kind];
 document.title = `Monster Pet — ${character.name}`;
@@ -30,11 +45,16 @@ document.querySelector('footer > span')!.textContent = `${character.name.toUpper
 document.querySelector('#game')!.setAttribute('aria-label', `Комната с питомцем ${character.name}`);
 const room = new RoomScene(store.snapshot.kind);
 let wallet = api.state.wallet;
-room.setDecoration(wallet.equipped);
+room.setDecoration(wallet.equipped, wallet.room);
 const balance = document.createElement('div'); balance.className = 'wallet-bar'; balance.setAttribute('aria-live', 'polite');
 document.querySelector('.room-top')!.after(balance);
 const friendshipPanel = document.createElement('section'); friendshipPanel.className = 'friendship-panel'; balance.after(friendshipPanel);
 const friendshipNotice = document.createElement('p'); friendshipNotice.className = 'friendship-notice'; friendshipNotice.setAttribute('role', 'status'); friendshipPanel.after(friendshipNotice);
+const dailyPanel = document.createElement('section'); dailyPanel.className = 'daily-quest'; dailyPanel.setAttribute('aria-label', 'Ежедневное задание'); document.querySelector('.actions')!.after(dailyPanel);
+function renderDailyQuest(): void {
+  const quest = api.state.dailyQuest;
+  dailyPanel.innerHTML = `<details><summary>Задание · ${quest.actions.length}/3 <span class="daily-reward">${quest.rewarded ? '✓ +10 монет' : '+10 монет'}</span></summary><ul>${(['feed', 'play', 'rest'] as const).map((action, index) => `<li>${quest.actions.includes(action) ? '✓' : '○'} ${['Покормить', 'Поиграть', 'Отдохнуть'][index]}</li>`).join('')}</ul><small>Новое задание в 03:00 МСК. Награда автоматически, даже при полных шкалах.</small></details>`;
+}
 function renderFriendship(): void {
   const progress = api.state.friendship;
   const day = api.state.serverTime.slice(0, 10);
@@ -42,34 +62,45 @@ function renderFriendship(): void {
   const level = friendshipLevel(progress.xp);
   const current = friendshipLevels[level]; const next = friendshipLevels[level + 1];
   const earned = progress.xp - current.xp; const needed = next ? next.xp - current.xp : 1;
-  friendshipPanel.innerHTML = `<div class="friendship-heading"><span>♥ ДРУЖБА · УР. ${level + 1}</span><strong>${current.title}</strong></div><progress aria-label="Опыт дружбы" max="${needed}" value="${next ? earned : 1}"></progress><p>${next ? `${earned} / ${needed} XP до следующего уровня` : 'Вы лучшие друзья!'} · Сегодня ${dailyXp}/50 XP</p><small>Забота +5 XP, раунд +10 XP. До 3 раз каждого вида в сутки UTC. За полную шкалу и простые касания опыт не начисляется.</small>`;
+  friendshipPanel.innerHTML = `<details><summary>♥ Дружба · ур. ${level + 1}<span>${next ? `${earned}/${needed} XP` : 'Макс.'}</span></summary><p>${current.title} · Сегодня ${dailyXp}/50 XP</p><small>Забота +5 XP, раунд +10 XP. До 3 раз в сутки UTC. Полные шкалы и касания без XP.</small></details><progress aria-label="Опыт дружбы" max="${needed}" value="${next ? earned : 1}"></progress>`;
 }
 renderFriendship();
 const shop = document.createElement('section'); shop.className = 'shop arcade';
 const shopMessage = document.createElement('p'); shopMessage.className = 'shop-message'; shopMessage.setAttribute('aria-live', 'polite');
-async function changeDecoration(path: string, item: string | null, message: string): Promise<void> {
+async function changeDecoration(path: string, item: string | null, message: string, slot?: DecorationSlot): Promise<void> {
+  void petSound.unlock();
   shop.querySelectorAll('button').forEach(button => { button.disabled = true; });
-  try { await api.mutate(path, { item }); wallet = api.state.wallet; room.setDecoration(wallet.equipped); shopMessage.textContent = message; }
+  try { await api.mutate(path, { item, ...(slot ? { slot } : {}) }); wallet = api.state.wallet; room.setDecoration(wallet.equipped, wallet.room); shopMessage.textContent = message; void petSound.effect('buy'); }
   catch (error) { wallet = api.state.wallet; shopMessage.textContent = error instanceof Error ? error.message : 'Не удалось выполнить покупку'; }
   renderEconomy();
 }
 function renderEconomy(): void {
   renderFriendship();
+  renderDailyQuest();
   balance.textContent = `◆ ${wallet.coins} МОНЕТ`;
   shop.replaceChildren();
   const title = document.createElement('h2'); title.textContent = 'ЛАВКА ВРЕДИНЫ'; shop.append(title);
-  const info = document.createElement('p'); info.textContent = 'Зарабатывай монеты в мини-игре. Купленный ковёр можно менять бесплатно.'; shop.append(info);
-  for (const item of decorations) {
-    const owned = wallet.owned?.includes(item.id);
-    const button = document.createElement('button');
-    button.textContent = `${item.name} · ${wallet.equipped === item.id ? 'Надет ✓' : owned ? 'Постелить' : `${item.price} монет`}`;
-    button.disabled = wallet.equipped === item.id || (!owned && wallet.coins < item.price);
-    button.onclick = () => { void changeDecoration(owned ? '/shop/equip' : '/shop/buy', item.id, owned ? 'Ковёр заменён.' : 'Покупка сохранена на сервере. Новый ковёр уже в комнате!'); };
-    shop.append(button);
+  for (const [slot, label] of [['rug', 'Ковры'], ['plant', 'На полку'], ['wall', 'На стену'], ['toy', 'Уют и игрушки']] as const) {
+    const section = document.createElement('section'); section.className = 'shop-category';
+    const heading = document.createElement('h3'); heading.textContent = label; section.append(heading);
+    const grid = document.createElement('div'); grid.className = 'shop-grid';
+    const equipped = slot === 'rug' ? wallet.equipped : wallet.room?.[slot];
+    for (const item of decorations.filter(item => item.slot === slot)) {
+      const owned = wallet.owned?.includes(item.id); const selected = equipped === item.id;
+      const button = document.createElement('button'); button.className = 'shop-item';
+      const icon = document.createElement('span'); icon.className = 'shop-icon'; icon.textContent = item.icon;
+      icon.style.color = `#${item.color.toString(16).padStart(6, '0')}`; icon.setAttribute('aria-hidden', 'true');
+      const name = document.createElement('strong'); name.textContent = item.name;
+      const status = document.createElement('small'); status.textContent = selected ? 'Выбрано ✓' : owned ? 'Поставить' : `${item.price} монет`;
+      button.append(icon, name, status); button.disabled = selected || (!owned && wallet.coins < item.price);
+      button.onclick = () => { void changeDecoration(owned ? '/shop/equip' : '/shop/buy', item.id, `${item.name} теперь в комнате!`); };
+      grid.append(button);
+    }
+    const reset = document.createElement('button'); reset.className = 'shop-reset'; reset.textContent = slot === 'rug' || slot === 'plant' ? 'По умолчанию' : 'Убрать'; reset.hidden = !equipped;
+    reset.onclick = () => { void changeDecoration('/shop/equip', null, 'Комната обновлена.', slot); };
+    section.append(grid, reset); shop.append(section);
   }
-  const reset = document.createElement('button'); reset.textContent = 'Обычный ковёр · бесплатно'; reset.disabled = !wallet.equipped;
-  reset.onclick = () => { void changeDecoration('/shop/equip', null, 'Обычный ковёр возвращён.'); };
-  shop.append(reset, shopMessage);
+  shop.append(shopMessage);
 }
 renderEconomy();
 const arcade = document.createElement('section'); arcade.className = 'arcade';
@@ -85,6 +116,7 @@ async function submitScore(score: number): Promise<void> {
   launch.disabled = true;
   try {
     const reply = await api.mutate('/minigames/finish', { runId, score }); wallet = api.state.wallet; renderEconomy();
+    if (reply.reward) void petSound.effect('reward');
     resultLine.textContent = `Поймано: ${score} · Награда: +${reply.reward ?? 0} монет · +${reply.xpGain ?? 0} XP`;
     friendshipNotice.textContent = reply.levelUp ? `Новый уровень дружбы! ${friendshipLine(store.snapshot.kind, api.state.friendship.xp)}` : reply.xpGain ? `Дружба +${reply.xpGain} XP` : '';
     pendingScore = null; launch.textContent = '▶ Ещё раунд';
@@ -96,9 +128,18 @@ async function submitScore(score: number): Promise<void> {
     navigation.querySelectorAll('button').forEach(button => { button.disabled = false; });
   }
 }
-const minigame = new CatchScene(store.snapshot.kind, score => { pendingScore = score; resultLine.textContent = 'Сохраняем результат…'; void submitScore(score); });
+const minigame = new CatchScene(store.snapshot.kind, score => { void petSound.effect('finish'); pendingScore = score; resultLine.textContent = 'Сохраняем результат…'; void submitScore(score); }, bad => { void petSound.effect(bad ? 'miss' : 'catch'); });
 const game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', width: 400, height: 320, backgroundColor: '#eee4d3', pixelArt: true, roundPixels: true, scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }, scene: [BootScene, room, minigame], audio: { noAudio: true } });
 gameInstance = game;
+const badge = document.querySelector('.badge')!;
+const cardButton = document.createElement('button'); cardButton.className = 'badge hero-card-open';
+cardButton.textContent = `${character.name.toUpperCase()} ↗`; cardButton.setAttribute('aria-label', `Открыть карточку монстрика ${character.name}`);
+badge.replaceWith(cardButton);
+cardButton.onclick = () => {
+  const texture = game.textures.get(`monster-v2:${store.snapshot.kind}:idle`);
+  if (texture.key === '__MISSING') return;
+  showHeroCard(store.snapshot.kind, api.state.friendship.xp, texture.getSourceImage() as HTMLImageElement | HTMLCanvasElement);
+};
 const stats = document.querySelector<HTMLDivElement>('#stats')!;
 const speech = document.querySelector<HTMLParagraphElement>('#speech')!;
 speech.textContent = friendshipLine(store.snapshot.kind, api.state.friendship.xp);
@@ -129,6 +170,7 @@ function selectView(id: typeof views[number]['id']): void {
   arcade.hidden = id !== 'games'; shop.hidden = id !== 'shop';
   stats.hidden = id !== 'home'; speech.hidden = id !== 'home';
   touchHint.hidden = id !== 'home'; audioStatus.hidden = id !== 'home';
+  dailyPanel.hidden = id !== 'home';
   document.querySelector<HTMLElement>('.actions')!.hidden = id !== 'home';
   document.querySelector<HTMLElement>('#game')!.hidden = id === 'shop';
   for (const button of Array.from(navigation.querySelectorAll('button'))) {
@@ -154,12 +196,14 @@ function render(state: PetState): void {
 }
 render(store.snapshot);
 launch.addEventListener('click', async () => {
+  void petSound.unlock();
   if (pendingScore !== null) { await submitScore(pendingScore); return; }
   if (!room.scene.isActive() || buttons.some(button => button.disabled)) return;
   buttons.forEach(item => { item.disabled = true; }); launch.disabled = true;
   navigation.querySelectorAll('button').forEach(button => { button.disabled = true; });
   try {
   const reply = await api.mutate('/minigames/start'); runId = reply.runId!;
+  void petSound.effect('start');
   resultLine.textContent = 'Раунд идёт! Печенье +1 · Носок −2';
   speech.textContent = petLine(store.snapshot.kind, 'gameStart');
   room.scene.start('Catch');
@@ -170,16 +214,19 @@ launch.addEventListener('click', async () => {
   }
 });
 buttons.forEach(button => button.addEventListener('click', async () => {
+  void petSound.unlock();
   const action = button.dataset.action as PetAction;
   buttons.forEach(item => { item.disabled = true; });
   try {
     const result = await store.act(action); render(result.state); speech.textContent = petLine(store.snapshot.kind, action);
-    renderFriendship();
-    friendshipNotice.textContent = result.levelUp ? `Новый уровень дружбы! ${friendshipLine(store.snapshot.kind, api.state.friendship.xp)}` : result.xpGain ? `Дружба +${result.xpGain} XP` : 'За это действие опыт уже не начисляется. Шкалы всё равно восстанавливаются.';
+    void petSound.effect(result.dailyReward ? 'reward' : action);
+    wallet = api.state.wallet; renderEconomy();
+    friendshipNotice.textContent = result.levelUp ? `Дружба: новый уровень! +${result.xpGain} XP` : result.xpGain ? `+${result.xpGain} XP` : '';
     document.querySelector('#save-status')!.textContent = 'Прогресс сохранён на сервере';
+    if (result.dailyReward) document.querySelector('#save-status')!.textContent = 'Ежедневное задание выполнено! +10 монет';
     if (!room.perform(action, () => { buttons.forEach(item => { item.disabled = false; }); })) buttons.forEach(item => { item.disabled = false; });
   } catch (error) {
-    render(store.snapshot); speech.textContent = error instanceof Error ? error.message : 'Действие не сохранено'; buttons.forEach(item => { item.disabled = false; });
+    render(store.snapshot); wallet = api.state.wallet; renderEconomy(); speech.textContent = error instanceof Error ? error.message : 'Действие не сохранено'; buttons.forEach(item => { item.disabled = false; });
   }
 }));
 }

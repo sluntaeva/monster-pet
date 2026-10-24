@@ -13,7 +13,7 @@ export class CatchScene extends Phaser.Scene {
   private finished = false;
   private hud!: Phaser.GameObjects.Text;
   private arrows?: Phaser.Types.Input.Keyboard.CursorKeys;
-  constructor(private kind: PetKind, private onFinish: (score: number) => void) { super('Catch'); }
+  constructor(private kind: PetKind, private onFinish: (score: number) => void, private onCatch: (bad: boolean) => void = () => {}) { super('Catch'); }
   create(): void {
     this.drops = []; this.elapsed = 0; this.spawnElapsed = 0; this.score = 0; this.finished = false;
     this.cameras.main.setBackgroundColor('#1d2538');
@@ -59,6 +59,7 @@ export class CatchScene extends Phaser.Scene {
       drop.sprite.y += drop.speed * seconds;
       if (drop.sprite.y >= 232 && drop.sprite.y <= 286 && Math.abs(drop.sprite.x - this.pet.x) < 35) {
         this.score = Math.max(0, this.score + (drop.bad ? -2 : 1));
+        this.onCatch(drop.bad);
         if (drop.bad) this.cameras.main.shake(90, .004);
         drop.sprite.destroy(); return false;
       }
