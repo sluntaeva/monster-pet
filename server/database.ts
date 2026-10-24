@@ -7,12 +7,13 @@ import { emptyWallet, awardRun, readWallet, type Wallet } from '../src/domain/ca
 import { drawPet, probabilities } from '../src/domain/onboarding';
 import { buyDecoration, decorations } from '../src/domain/shop';
 import { initialFriendship, gainFriendship, type Friendship } from '../src/domain/friendship';
+import { applyAbsence } from '../src/domain/absence';
 
 export class ApiError extends Error {
   constructor(public status: number, message: string) { super(message); }
 }
 export interface Snapshot { pet: PetState | null; wallet: Wallet; friendship: Friendship; version: number; serverTime: string }
-type Account = { id: string; pet: string | null; wallet: string; friendship: string; version: number };
+type Account = { id: string; pet: string | null; wallet: string; friendship: string; version: number; pet_updated_at: number };
 export const hashToken = (token: string) => createHash('sha256').update(token).digest('hex');
 export class GameDatabase {
   db: DatabaseSync;
@@ -32,7 +33,11 @@ export class GameDatabase {
       if (!columns.some(column => column.name === 'friendship')) {
         this.db.exec(`ALTER TABLE accounts ADD COLUMN friendship TEXT NOT NULL DEFAULT '${JSON.stringify(initialFriendship())}'`);
       }
-      this.db.exec('PRAGMA user_version=2; COMMIT');
+      if (!columns.some(column => column.name === 'pet_updated_at')) {
+        this.db.exec('ALTER TABLE accounts ADD COLUMN pet_updated_at INTEGER NOT NULL DEFAULT 0');
+        this.db.prepare('UPDATE accounts SET pet_updated_at=?').run(this.now());
+      }
+      this.db.exec('PRAGMA user_version=3; COMMIT');
     } catch (error) { this.db.exec('ROLLBACK'); throw error; }
   }
   close(): void { this.db.close(); }
@@ -43,6 +48,14 @@ export class GameDatabase {
   }
   state(id: string): Snapshot {
     const row = this.account(id);
+    if (row.pet) {
+      const result = applyAbsence(JSON.parse(row.pet), row.pet_updated_at, this.now());
+      if (result.updatedAt !== row.pet_updated_at) {
+        row.pet = JSON.stringify(result.pet);
+        this.db.prepare('UPDATE accounts SET pet=?,pet_updated_at=?,version=version+1 WHERE id=?').run(row.pet, result.updatedAt, id);
+        row.version++;
+      }
+    }
     return { pet: row.pet ? JSON.parse(row.pet) : null, wallet: readWallet(JSON.parse(row.wallet)), friendship: JSON.parse(row.friendship), version: row.version, serverTime: new Date(this.now()).toISOString() };
   }
   login(id: string, legacy?: { pet?: unknown; wallet?: unknown }): string {
@@ -50,7 +63,7 @@ export class GameDatabase {
     try {
       const pet = legacy && isPetState(legacy.pet) ? legacy.pet : null;
       const wallet = pet ? readWallet(legacy?.wallet) : emptyWallet();
-      this.db.prepare('INSERT OR IGNORE INTO accounts(id,pet,wallet) VALUES(?,?,?)').run(id, pet ? JSON.stringify(pet) : null, JSON.stringify(wallet));
+      this.db.prepare('INSERT OR IGNORE INTO accounts(id,pet,wallet,pet_updated_at) VALUES(?,?,?,?)').run(id, pet ? JSON.stringify(pet) : null, JSON.stringify(wallet), this.now());
       const token = randomBytes(32).toString('hex');
       this.db.prepare('DELETE FROM sessions WHERE expires < ?').run(this.now());
       this.db.prepare('INSERT INTO sessions VALUES(?,?,?)').run(hashToken(token), id, this.now() + 7 * 86400000);
@@ -75,6 +88,8 @@ export class GameDatabase {
       const row = this.account(id);
       if (body.version !== row.version) throw new ApiError(409, 'Состояние изменилось. Обновили данные; повтори действие.');
       let pet: PetState | null = row.pet ? JSON.parse(row.pet) : null;
+      const absence = pet ? applyAbsence(pet, row.pet_updated_at, this.now()) : null;
+      if (absence) pet = absence.pet;
       let wallet = readWallet(JSON.parse(row.wallet));
       let friendship: Friendship = JSON.parse(row.friendship);
       const extra: Record<string, unknown> = {};
@@ -129,7 +144,7 @@ export class GameDatabase {
           default: throw new ApiError(404, 'Маршрут не найден');
         }
       }
-      this.db.prepare('UPDATE accounts SET pet=?,wallet=?,friendship=?,version=version+1 WHERE id=?').run(JSON.stringify(pet), JSON.stringify(wallet), JSON.stringify(friendship), id);
+      this.db.prepare('UPDATE accounts SET pet=?,wallet=?,friendship=?,pet_updated_at=?,version=version+1 WHERE id=?').run(JSON.stringify(pet), JSON.stringify(wallet), JSON.stringify(friendship), absence?.updatedAt ?? this.now(), id);
       const response = { ...extra, state: this.state(id) };
       this.db.prepare('INSERT INTO receipts VALUES(?,?,?,?)').run(id, requestId, fingerprint, JSON.stringify(response));
       this.db.exec('COMMIT'); return response;
